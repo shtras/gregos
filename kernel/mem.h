@@ -56,20 +56,10 @@ public:
     void dealloc(void* ptr);
 private:
     void createTable(int idx, uint32_t startAddr);
-    struct page_t
-    {
-        uint32_t present    : 1;
-        uint32_t rw         : 1;
-        uint32_t user       : 1;
-        uint32_t accessed   : 1;
-        uint32_t dirty      : 1;
-        uint32_t unused     : 7;
-        uint32_t frame      : 20;
-    };
 
     struct table_t
     {
-        page_t pages[1024];
+        uint32_t pages[1024];
     };
 
     bool active_;

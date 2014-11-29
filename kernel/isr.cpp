@@ -21,7 +21,7 @@ void irq_handler(registers_t regs)
     // Send reset signal to master. (As well as slave, if necessary).
     outb(0x20, 0x20);
 
-    kprintf("IRQ %d\n", regs.int_no);
+    //kprintf("IRQ %d\n", regs.int_no);
 
     if (interrupt_handlers[regs.int_no] != 0)
     {
@@ -32,10 +32,38 @@ void irq_handler(registers_t regs)
 
 extern "C" void isr_handler(registers_t regs)
 {
-    kprintf("ISR %d!!!\n", regs.int_no);
     if (interrupt_handlers[regs.int_no] != 0)
     {
         isr_t handler = interrupt_handlers[regs.int_no];
         handler(regs);
     }
+}
+
+void enableInterrupts(uint16_t mask)
+{
+    uint16_t currMask = getInterruptMask();
+    currMask |= mask;
+    setInterruptMask(currMask);
+}
+
+void disableInterrupts(uint16_t mask)
+{
+    uint16_t currMask = getInterruptMask();
+    currMask &= ~mask;
+    setInterruptMask(currMask);
+}
+
+void setInterruptMask(uint16_t mask)
+{
+    mask = ~mask;
+    outb(0x21, mask & 0xff);
+    outb(0xa1, mask >> 8);
+}
+
+uint16_t getInterruptMask()
+{
+    uint16_t mask = inb(0xa1);
+    mask <<= 8;
+    mask |= inb(0x21);
+    return ~mask;
 }

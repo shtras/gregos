@@ -13,7 +13,18 @@ CPP_OBJS = ${CPP_SOURCE:.cpp=.o}
 ASM_OBJS = ${ASM_SOURCE:.s=.o}
 NASM_OBJS = ${NASM_SOURCE:.asm=.o}
 
-CFLAGS = -ffreestanding -Wno-write-strings -fno-rtti -fno-exceptions -fno-threadsafe-statics -nostdlib  -DANOTHER_BRICK_IN_THE -Wall
+CFLAGS = -ffreestanding -Wno-write-strings -fno-rtti -fno-exceptions -fno-optimize-sibling-calls -fno-threadsafe-statics -nostdlib -Wall -g -O2 
+#-fauto-inc-dec -fcompare-elim -fcprop-registers -fdce -fdefer-pop -fdse -fguess-branch-probability    \
+#-fif-conversion2 -fif-conversion -fipa-pure-const -fipa-profile -fipa-reference -fmerge-constants -fsplit-wide-types   \
+#-ftree-bit-ccp -ftree-builtin-call-dce -ftree-ccp -ftree-ch -ftree-copyrename -ftree-dce -ftree-dominator-opts         \
+#-ftree-dse -ftree-forwprop -ftree-fre -ftree-phiprop -ftree-slsr -ftree-sra -ftree-pta -ftree-ter -funit-at-a-time     \
+#-falign-functions  -falign-jumps -falign-loops  -falign-labels -fcaller-saves -fcrossjumping -fcse-follow-jumps        \
+#-fcse-skip-blocks -fdelete-null-pointer-checks -fdevirtualize -fdevirtualize-speculatively -fexpensive-optimizations   \
+#-fgcse  -fgcse-lm -fhoist-adjacent-loads -finline-small-functions -findirect-inlining -fipa-sra                        \
+#-fisolate-erroneous-paths-dereference -foptimize-sibling-calls -fpartial-inlining -fpeephole2 -freorder-blocks         \
+#-freorder-functions -frerun-cse-after-loop -fsched-interblock  -fsched-spec -fschedule-insns  -fschedule-insns2        \
+#-fstrict-aliasing -fstrict-overflow -ftree-switch-conversion -ftree-tail-merge -ftree-pre -ftree-vrp
+
 LDFLAGS = -ffreestanding -nostdlib -lgcc
 INC_FLAGS = -I. -Ikernel -Idrivers -Iutils
 

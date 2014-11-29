@@ -167,6 +167,18 @@ void ScreenManager::setColor( uchar fg, uchar bg )
     color_ = fg | bg << 4;
 }
 
+void ScreenManager::returnCursor()
+{
+    moveCursor(oldRow_, oldCol_);
+}
+
+void ScreenManager::putCursor(int row, int col)
+{
+    oldRow_ = row_;
+    oldCol_ = col_;
+    moveCursor(row, col);
+}
+
 void kprintf(const char* fmt, ...)
 {
     ScreenManager& manager = ScreenManager::getInstance();

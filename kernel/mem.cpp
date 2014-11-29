@@ -61,7 +61,6 @@ extern "C" uint32_t end;
 void init_paging()
 {
     uint32_t memoryStart = (uint32_t)&end;
-    kprintf("Memory start: %x\n", memoryStart);
     PhysHeap& heap = PhysHeap::getInstance();
     heap.initialize(memoryStart, memoryStart + 0x1000000);
     uint32_t mmStart = 0xc0000000;
@@ -69,7 +68,6 @@ void init_paging()
     uint32_t mmEnd = mmStart + mmSize;
     MemManager* mm = new MemManager();
     PageDir* dir = new PageDir(mm);
-    kprintf("AAA: %x %x\n", mm, dir);
     for (int i = 0; i < 5000; ++i) {
         dir->addPage(i * 0x1000, true);
     }
@@ -77,6 +75,13 @@ void init_paging()
         dir->addPage(i, false);
     }
     dir->activate();
+
+    uint32_t cr0;
+    asm volatile("mov %%cr0, %0": "=r"(cr0));
+    cr0 |= 0x80000000; // Enable paging!
+    asm volatile("mov %0, %%cr0":: "r"(cr0));
+
+
     mm->init(mmStart);
 }
 
@@ -161,7 +166,6 @@ PageDir::~PageDir()
 
 void PageDir::addPage(uint32_t addr, bool directMapping)
 {
-    uint32_t tmp = addr;
     addr /= 0x1000;
     uint32_t physAddr = addr;
     if (!directMapping) {
@@ -171,21 +175,14 @@ void PageDir::addPage(uint32_t addr, bool directMapping)
     int tableIdx = addr / 1024;
     int pageIdx = addr % 1024;
     if (!tables_[tableIdx]) {
-        kprintf("Creating table %d. Vaddr: %x ", tableIdx, tmp);
         createTable(tableIdx, physAddr);
     }
     table_t* table = tables_[tableIdx];
-    if (table->pages[pageIdx].present) {
+    if (table->pages[pageIdx] & 0x1) {
         panic("Page already exists.");
     }
-    page_t page;
-    *(uint32_t*)&page = 0;
-    page.present = 1;
-    page.rw = 1;
-    page.user = 0;
-    page.frame = physAddr;
+    uint32_t page = physAddr * 0x1000 | 3;
     table->pages[pageIdx] = page;
-    //kprintf("Page %d: %x\n", pageIdx, *(int*)&page);
 };
 
 extern "C" void loadPageDirectory(uint32_t*);
@@ -194,10 +191,7 @@ extern "C" void enablePaging();
 void PageDir::activate()
 {
     asm volatile("mov %0, %%cr3":: "r"(tablesPhys_));
-    uint32_t cr0;
-    asm volatile("mov %%cr0, %0": "=r"(cr0));
-    cr0 |= 0x80000000; // Enable paging!
-    asm volatile("mov %0, %%cr0":: "r"(cr0));
+
     PhysHeap::getInstance().switchToPaged(this);
     active_ = true;
 }
@@ -208,13 +202,9 @@ void PageDir::createTable(int idx, uint32_t startAddr)
     if (tables_[idx]) {
         panic("Cannot create table. Already present.");
     }
-    uint32_t phys;
+    uint32_t phys = 0;
     table_t* table = (table_t*)PhysHeap::getInstance().alloc(sizeof(table_t), true, &phys);
-    kprintf("Paddr: %x\n", phys);
-    //memset(table->pages, 0, 0x1000);
-    for (int i=0; i<1024; ++i) {
-        *(uint32_t*)&(table->pages[i]) = startAddr + (i*0x1000 | 2);
-    }
+    memset(table->pages, 0, 1024*sizeof(uint32_t));
     tablesPhys_[idx] = phys | 0x3;
     tables_[idx] = table;
 }
@@ -378,19 +368,17 @@ void* MemManager::alloc(size_t size, void*& heap)
 
 void MemManager::dealloc(void* ptr)
 {
-    void* heap;
-    void** origHeap;
+    void* heap = NULL;
+    void** origHeap = NULL;
     --chunks_;
     size_ -= SZ(ptr);
     if (ptr > startSmall_ && ptr < endSmall_) {
         heap = smallHeap_;
         origHeap = &smallHeap_;
-    }
-    else if (ptr > startLarge_ && ptr < endLarge_) {
+    } else if (ptr > startLarge_ && ptr < endLarge_) {
         heap = largeHeap_;
         origHeap = &largeHeap_;
-    }
-    else {
+    } else {
         kassert(0);
     }
     void* prev = NULL;

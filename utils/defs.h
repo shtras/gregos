@@ -4,3 +4,5 @@
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
+
+#define OS_NAME "SuslikOS"

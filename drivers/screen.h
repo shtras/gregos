@@ -33,7 +33,8 @@ public:
         COLOR_WHITE = 15,
     };
     static ScreenManager& getInstance();
-    void moveCursor(int row, int col);
+    void putCursor(int row, int col);
+    void returnCursor();
     void print(const char* str);
     void print(int val);
     void printHex(uint32_t val);
@@ -44,6 +45,7 @@ private:
     ScreenManager();
     ~ScreenManager();
 
+    void moveCursor(int row, int col);
     void shiftCursor();
     int getOffset(int row, int col);
     void scrollLine();
@@ -51,6 +53,8 @@ private:
 
     int row_;
     int col_;
+    int oldRow_;
+    int oldCol_;
     char* vMem_;
     bool disableScroll_;
     uchar color_;
