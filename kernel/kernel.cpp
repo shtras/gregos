@@ -18,7 +18,7 @@ static void timer_callback(registers_t regs)
     }
 }
 
-static void __attribute__((noinline)) key_callback(registers_t regs)
+static void key_callback(registers_t regs)
 {
     uchar c = inb(0x60) & 0x7f;
     kprintf("Key %d\n", c);
